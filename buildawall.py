@@ -5,6 +5,13 @@ from contextlib import contextmanager
 
 from pymclevel import mclevel, ChunkNotPresent
 
+"""
+  -x
+-z  +z
+  +x
+
+"""
+
 
 class WallBuilder(object):
     def __init__(self, level, min_height=-119, max_height=119,
@@ -41,51 +48,54 @@ class WallBuilder(object):
         walls_pz = set()
         walls_nz = set()
 
+        null_set = set()
+
         for chunk_x, chunk_z in self.level.allChunks:
-            if not chunk_z in chunk_map.get(chunk_x - 1, set()):
-                walls_nx.add((chunk_x, chunk_z))
-                self.wall_x(0, (chunk_x, chunk_z))
-            if not chunk_z in chunk_map.get(chunk_x + 1, set()):
-                walls_px.add((chunk_x, chunk_z))
-                self.wall_x(1, (chunk_x, chunk_z))
-            if not (chunk_z - 1) in chunk_map.get(chunk_x, set()):
-                walls_nz.add((chunk_x, chunk_z))
-                self.wall_z(0, (chunk_x, chunk_z))
-            if not (chunk_z + 1) in chunk_map.get(chunk_x, set()):
-                walls_pz.add((chunk_x, chunk_z))
-                self.wall_z(1, (chunk_x, chunk_z))
+            chunk = (chunk_x, chunk_z)
+            if not chunk_z in chunk_map.get(chunk_x - 1, null_set):
+                walls_nx.add(chunk)
+                self.wall_x(0, chunk)
+            if not chunk_z in chunk_map.get(chunk_x + 1, null_set):
+                walls_px.add(chunk)
+                self.wall_x(1, chunk)
+            if not (chunk_z - 1) in chunk_map.get(chunk_x, null_set):
+                walls_nz.add(chunk)
+                self.wall_z(0, chunk)
+            if not (chunk_z + 1) in chunk_map.get(chunk_x, null_set):
+                walls_pz.add(chunk)
+                self.wall_z(1, chunk)
 
         for chunk_x, chunk_z in walls_nx:
-            if (chunk_x - 1, chunk_z) not in walls_nx:
-                self.corner(3, 0, (chunk_x - 1, chunk_z))
-            if (chunk_x + 1, chunk_z) not in walls_nx:
-                self.corner(2, 1, (chunk_x - 1, chunk_z))
-        for chunk_x, chunk_z in walls_px:
-            if (chunk_x - 1, chunk_z) not in walls_px:
-                self.corner(1, 2, (chunk_x - 1, chunk_z))
-            if (chunk_x + 1, chunk_z) not in walls_px:
-                self.corner(0, 3, (chunk_x - 1, chunk_z))
-        for chunk_x, chunk_z in walls_nz:
-            if (chunk_x, chunk_z - 1) not in walls_nz:
-                self.corner(0, 3, (chunk_x, chunk_z - 1))
-            if (chunk_x, chunk_z + 1) not in walls_nz:
-                self.corner(2, 1, (chunk_x, chunk_z + 1))
-        for chunk_x, chunk_z in walls_pz:
-            if (chunk_x, chunk_z - 1) not in walls_pz:
+            if (chunk_x, chunk_z - 1) not in walls_nx:
                 self.corner(1, 2, (chunk_x, chunk_z - 1))
-            if (chunk_x, chunk_z + 1) not in walls_pz:
-                self.corner(3, 0, (chunk_x, chunk_z + 1))
+            if (chunk_x, chunk_z + 1) not in walls_nx:
+                self.corner(0, 3, (chunk_x, chunk_z + 1))
+        for chunk_x, chunk_z in walls_px:
+            if (chunk_x, chunk_z - 1) not in walls_px:
+                self.corner(3, 0, (chunk_x, chunk_z - 1))
+            if (chunk_x, chunk_z + 1) not in walls_px:
+                self.corner(2, 1, (chunk_x, chunk_z + 1))
+        for chunk_x, chunk_z in walls_nz:
+            if (chunk_x - 1, chunk_z) not in walls_nz:
+                self.corner(2, 1, (chunk_x - 1, chunk_z))
+            if (chunk_x + 1, chunk_z) not in walls_nz:
+                self.corner(0, 3, (chunk_x + 1, chunk_z))
+        for chunk_x, chunk_z in walls_pz:
+            if (chunk_x - 1, chunk_z) not in walls_pz:
+                self.corner(3, 0, (chunk_x - 1, chunk_z))
+            if (chunk_x + 1, chunk_z) not in walls_pz:
+                self.corner(1, 2, (chunk_x + 1, chunk_z))
 
         for chunk_a in walls_nx:
-            if chunk_a in walls_nz:
-                self.corner(2, 2, chunk_a)
-            if chunk_a in walls_pz:
-                self.corner(3, 3, chunk_a)
-        for chunk_a in walls_px:
             if chunk_a in walls_nz:
                 self.corner(0, 0, chunk_a)
             if chunk_a in walls_pz:
                 self.corner(1, 1, chunk_a)
+        for chunk_a in walls_px:
+            if chunk_a in walls_nz:
+                self.corner(2, 2, chunk_a)
+            if chunk_a in walls_pz:
+                self.corner(3, 3, chunk_a)
 
 
     def wall_x(self, side, chunk_a):
@@ -124,8 +134,8 @@ class WallBuilder(object):
              oii         iio
              ooo         ooo
         """
-        x_flip = (out_direction & 1) * 2
-        z_flip = (out_direction & 1) * 2
+        x_flip = bool(out_direction & 2) * 2
+        z_flip = bool(out_direction & 1) * 2
         blocks[:,:,:]      = self.im
         blocks[x_flip,:,:] = self.om
         blocks[:,z_flip,:] = self.om
@@ -138,8 +148,8 @@ class WallBuilder(object):
         2 3
         """
         # lol
-        x = int(((((corner & 1) * 2) - 1) * 14.5) - 1.5)
-        z = int(((((corner & 1) * 2) - 1) * 14.5) - 1.5)
+        x = int((((bool(corner & 2) * 2) - 1) * 14.5) - 1.5)
+        z = int((((bool(corner & 1) * 2) - 1) * 14.5) - 1.5)
         return blocks[x:x+3,z:z+3,:]
 
 
