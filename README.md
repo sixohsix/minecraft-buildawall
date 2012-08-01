@@ -15,3 +15,33 @@ bedrock. It's not-quite maximum height or depth, so you can climb over
 it or burrow under it, though that's still a challenge. By tweaking
 the script you can change the wall material, and make it destructable
 if you want.
+
+Usage
+-----
+
+These instructions are for Mac OS X. Ensure you have a working Python 2.x release.
+
+Clone and install pymclevel (it's not in PyPI, sadly).
+
+    git clone git://github.com/mcedit/pymclevel.git
+    cd pymclevel
+    python setup.py install
+    
+Clone and install buildawall
+
+     cd ..
+     git clone git://github.com/sixohsix/minecraft-buildawall.git
+     cd minecraft-buildawall
+     python setup.py install
+
+Make a backup of your world
+
+    cp -pr ~/Library/Application\ Support/minecraft/saves/your_world_name ~/world_backup
+    
+Run buildawall
+
+    buildawall ~/Library/Application\ Support/minecraft/saves/your_world_name/level.dat
+
+Wait.
+
+Play.
